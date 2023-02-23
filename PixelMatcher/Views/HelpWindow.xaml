@@ -1,0 +1,25 @@
+﻿<Window x:Class="PixelMatcher.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PixelMatcher" 
+        xmlns:viewModels="clr-namespace:PixelMatcher.ViewModels"
+        WindowStyle="ToolWindow"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        mc:Ignorable="d"
+        x:Name="HelpWindow1"
+        Title="Help" Height="191" Width="303">
+    <Window.DataContext>
+        <viewModels:HelpViewModel/>
+    </Window.DataContext>
+    <Window.InputBindings>
+        <KeyBinding Key="Esc" Command="{Binding ExitCommand}" CommandParameter="{Binding ElementName=HelpWindow1}"/>
+    </Window.InputBindings>
+    <Grid>
+        <Border BorderBrush="SteelBlue" >
+            <TextBlock Text="{Binding HelpText}" FontWeight="Normal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,10"></TextBlock>
+        </Border>
+    </Grid>
+</Window>
