@@ -63,6 +63,7 @@ namespace PixelMatcher.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Paste image from clipboard or drag image file. 
         ///Scroll mouse wheel to change opacity.
+        ///Scroll mouse with Ctrl pressed to change zoom level.
         ///Press Up/Down to navigate through image history.
         ///Press Delete to remove current image.
         ///Press T to toggle window topmost mode.

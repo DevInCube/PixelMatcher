@@ -1,75 +1,141 @@
 ﻿<Window x:Class="PixelMatcher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:behaviors="clr-namespace:PixelMatcher.Behaviors"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:viewModels="clr-namespace:PixelMatcher.ViewModels" 
-        xmlns:behaviors="clr-namespace:PixelMatcher.Behaviors" 
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-        mc:Ignorable="d" 
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:PixelMatcher.ViewModels"
         Name="MainWindow1"
-        WindowStyle="None"
-        AllowsTransparency="True"
-        AllowDrop="True"
-        Topmost="{Binding Topmost}"
-        Title="PixelMatcher" 
-        Width="{Binding WindowWidth, Mode=TwoWay}" Height="{Binding WindowHeight, Mode=TwoWay}" 
-        MinWidth="{Binding MinWindowWidth, FallbackValue=400}" MinHeight="{Binding MinWindowHeight, FallbackValue=400}" 
+        Title="PixelMatcher"
+        Width="{Binding WindowWidth, Mode=TwoWay}"
+        Height="{Binding WindowHeight, Mode=TwoWay}"
+        MinWidth="{x:Static viewModels:MainViewModel.MinWindowWidth}"
+        MinHeight="{x:Static viewModels:MainViewModel.MinWindowHeight}"
         behaviors:WindowClipboardBehavior.PasteCommand="{Binding PasteCommand, Mode=OneWay}"
-        Background="Transparent">
+        AllowDrop="True"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="{Binding Topmost}"
+        WindowStyle="None"
+        mc:Ignorable="d">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      ResizeBorderThickness="8" />
+    </WindowChrome.WindowChrome>
     <Window.DataContext>
-        <viewModels:MainViewModel/>
+        <viewModels:MainViewModel />
     </Window.DataContext>
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="PreviewDrop">
-            <i:InvokeCommandAction Command="{Binding PreviewDropCommand}" PassEventArgsToCommand="True"/>
+            <i:InvokeCommandAction Command="{Binding PreviewDropCommand}" PassEventArgsToCommand="True" />
         </i:EventTrigger>
         <i:EventTrigger EventName="MouseWheel">
-            <i:InvokeCommandAction Command="{Binding MouseWheelCommand}" PassEventArgsToCommand="True"/>
+            <i:InvokeCommandAction Command="{Binding MouseWheelCommand}" PassEventArgsToCommand="True" />
         </i:EventTrigger>
         <i:EventTrigger EventName="MouseDown">
-            <i:InvokeCommandAction Command="{Binding MouseDownCommand}" CommandParameter="{Binding ElementName=MainWindow1}"/>
+            <i:InvokeCommandAction Command="{Binding MouseDownCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Window.InputBindings>
-        <KeyBinding Key="Esc" Command="{Binding ExitCommand}" CommandParameter="{Binding ElementName=MainWindow1}"/>
-        <KeyBinding Key="T" Command="{Binding ToggleTopmostCommand}"/>
-        <KeyBinding Key="F1" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}"/>
-        <KeyBinding Key="H" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}"/>
-        <KeyBinding Key="Delete" Command="{Binding DeleteCurrentImageCommand}"/>
-        <KeyBinding Key="Up" Command="{Binding PreviousImageCommand}"/>
-        <KeyBinding Key="Down" Command="{Binding NextImageCommand}"/>
+        <KeyBinding Key="Esc" Command="{Binding ExitCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
+        <KeyBinding Key="T" Command="{Binding ToggleTopmostCommand}" />
+        <KeyBinding Key="F1" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
+        <KeyBinding Key="H" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
+        <KeyBinding Key="Delete" Command="{Binding DeleteCurrentImageCommand}" />
+        <KeyBinding Key="Up" Command="{Binding PreviousImageCommand}" />
+        <KeyBinding Key="Down" Command="{Binding NextImageCommand}" />
     </Window.InputBindings>
     <Window.Resources>
-        <ResourceDictionary Source="WindowResourceDictionary.xaml"/>
+        <ResourceDictionary Source="WindowResourceDictionary.xaml" />
     </Window.Resources>
     <Grid>
-        <Border BorderBrush="LightSteelBlue" BorderThickness="2, 32, 2, 2">
-            <Image Source="{Binding ImageSource}" Opacity="{Binding ImageOpacity}" Stretch="None" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+        <Border BorderBrush="LightSteelBlue" BorderThickness="2,32,2,2">
+            <Canvas ClipToBounds="True">
+                <Image HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Opacity="{Binding ImageOpacity}"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       RenderTransformOrigin="0,0"
+                       Source="{Binding ImageSource}"
+                       Stretch="None">
+                    <Image.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="{Binding ZoomLevel}" ScaleY="{Binding ZoomLevel}" />
+                            <!--  Transforms order is important for correct Zoom&Pan functionality  -->
+                            <TranslateTransform X="{Binding ImagePositionX}" Y="{Binding ImagePositionY}" />
+                        </TransformGroup>
+                    </Image.RenderTransform>
+                </Image>
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="MouseDown">
+                        <i:InvokeCommandAction Command="{Binding ImageMouseDownCommand}" PassEventArgsToCommand="True" />
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="MouseMove">
+                        <i:InvokeCommandAction Command="{Binding ImageMouseMoveCommand}" PassEventArgsToCommand="True" />
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="MouseUp">
+                        <i:InvokeCommandAction Command="{Binding ImageMouseUpCommand}" PassEventArgsToCommand="True" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+            </Canvas>
         </Border>
-        <Border Height="32" VerticalAlignment="Top">
+        <Border Height="32" VerticalAlignment="Top" Panel.ZIndex="100500">
             <DockPanel VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="5,0,0,0">
+                <StackPanel Margin="5,0,0,0" VerticalAlignment="Center" Orientation="Horizontal">
                     <TextBlock Style="{StaticResource ImagesText}">
-                        <Run Text="Image: "/>
-                        <Run Text="{Binding ImagePosition, FallbackValue=0}"/>
-                        <Run Text="/"/>
-                        <Run Text="{Binding Images.Count, FallbackValue=0, Mode=OneWay}"/>
+                        <Run Text="Image: " />
+                        <Run Text="{Binding ImageIndex, FallbackValue=0}" />
+                        <Run Text="/" />
+                        <Run Text="{Binding Images.Count, FallbackValue=0, Mode=OneWay}" />
                     </TextBlock>
                     <TextBlock Style="{StaticResource NoImagesText}">
-                        <Run Text="Drop or paste image."/>
+                        <Run Text="Drop or paste image." />
                     </TextBlock>
-                    <TextBlock Text="Opacity:" Margin="10,0,5,0"/>
-                    <TextBlock Text="{Binding ImageOpacity, StringFormat={}{0:0.##}}"/>
+                    <TextBlock Width="70" Margin="10,0,5,0">
+                        <Run Text="Opacity: " />
+                        <Run Text="{Binding ImageOpacity, StringFormat={}{0:0.##}}" />
+                    </TextBlock>
+                    <Slider Width="80"
+                            Margin="0,0,5,0"
+                            LargeChange="0.33"
+                            Maximum="{x:Static viewModels:MainViewModel.MaximumOpacity}"
+                            Minimum="{x:Static viewModels:MainViewModel.MinimumOpacity}"
+                            SmallChange="0.1"
+                            Value="{Binding ImageOpacity}" />
+                    <TextBlock Width="80" Margin="10,0,5,0">
+                        <Run Text="Zoom: " />
+                        <Run Text="{Binding ZoomLevel, StringFormat=x{0:0.0}}" />
+                    </TextBlock>
+                    <Slider Width="80"
+                            Margin="0,0,5,0"
+                            LargeChange="3"
+                            Maximum="{x:Static viewModels:MainViewModel.MaximumZoomLevel}"
+                            Minimum="{x:Static viewModels:MainViewModel.MinimumZoomLevel}"
+                            SmallChange="1"
+                            Value="{Binding ZoomLevel}" />
                 </StackPanel>
-                <Button Content="✕" Command="{Binding ExitCommand}" CommandParameter="{Binding ElementName=MainWindow1}" DockPanel.Dock="Right" HorizontalAlignment="Right" />
-                <Button Content="Help" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="0,0,5,0">
-                    <TextBlock Text="Topmost:" Margin="10,0,5,0"/>
-                    <TextBlock Text="{Binding Topmost}"/>
+                <Button HorizontalAlignment="Right"
+                        Command="{Binding ExitCommand}"
+                        CommandParameter="{Binding ElementName=MainWindow1}"
+                        Content="✕"
+                        DockPanel.Dock="Right" />
+                <Button HorizontalAlignment="Right"
+                        Command="{Binding HelpCommand}"
+                        CommandParameter="{Binding ElementName=MainWindow1}"
+                        Content="Help"
+                        DockPanel.Dock="Right" />
+                <StackPanel Margin="0,0,5,0"
+                            HorizontalAlignment="Right"
+                            DockPanel.Dock="Right"
+                            Orientation="Horizontal">
+                    <TextBlock Margin="10,0,5,0" Text="Topmost:" />
+                    <CheckBox Margin="0,0,5,0" VerticalAlignment="Center" IsChecked="{Binding Topmost}" />
                 </StackPanel>
             </DockPanel>
         </Border>
     </Grid>
-    
+
 </Window>
