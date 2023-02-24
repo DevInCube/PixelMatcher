@@ -36,12 +36,14 @@ namespace PixelMatcher.Behaviors
 
         private static void PasteCommandExecuted(object target, ExecutedRoutedEventArgs e)
         {
-            GetPasteCommand(target as Window)?.Execute(null);
+            var window = target as Window;
+            GetPasteCommand(window)?.Execute(window?.DataContext);
         }
 
         private static void PasteCommandCanExecute(object target, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = GetPasteCommand(target as Window)?.CanExecute(null) ?? false;
+            var window = target as Window;
+            e.CanExecute = GetPasteCommand(window)?.CanExecute(window?.DataContext) ?? false;
             e.Handled = true;
         }
     }

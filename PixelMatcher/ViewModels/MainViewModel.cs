@@ -1,22 +1,33 @@
-﻿using System;
+﻿using PixelMatcher.Common;
+using PixelMatcher.Helpers;
+using System;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
-using PixelMatcher.Common;
-using PixelMatcher.Helpers;
 
 namespace PixelMatcher.ViewModels
 {
     internal class MainViewModel : ObservableObject
     {
-        private const double MinimumOpacity = 0.1;
-        private const double MaximumOpacity = 0.9;
+        public const double MinWindowWidth = 640;
+        public const double MinWindowHeight = 480;
+
+        public const double MinimumOpacity = 0.1;
+        public const double MaximumOpacity = 0.9;
+
+        public const double MinimumZoomLevel = 1.0;
+        public const double MaximumZoomLevel = 12.0;
 
         private bool _topmost = true;
         private double _imageOpacity = 0.5;
-        private int _imagePosition = 0;
+        private int _imageIndex = 0;
+        private double _zoomLevel = MinimumZoomLevel;
+        private bool _isDragging;
+        private Point _clickPosition;
+        private double _imagePositionX;
+        private double _imagePositionY;
 
         public bool Topmost
         {
@@ -30,38 +41,59 @@ namespace PixelMatcher.ViewModels
             set => SetProperty(ref _imageOpacity, value);
         }
 
-        public BitmapSource ImageSource => ImagePosition != 0 ? Images[ImagePosition - 1] : null;
-        
+        public BitmapSource ImageSource => ImageIndex != 0 ? Images[ImageIndex - 1] : null;
+
         public double WindowWidth
         {
-            get => ImageSource == null ? 0 : ImageSource.Width + 4;
-            set { } // This needs to be TwoWay to work.
+            get => ImageSource == null ? MinWindowWidth : ImageSource.Width + 4;
+            set { } // Ignore resize by user
         }
 
         public double WindowHeight
         {
-            get => ImageSource == null ? 0 : ImageSource.Height + 34;
-            set { } // This needs to be TwoWay to work.
+            get => ImageSource == null ? MinWindowHeight : ImageSource.Height + 34;
+            set { } // Ignoire resize by user
         }
-
-        public double MinWindowWidth => 400;
-
-        public double MinWindowHeight => 400;
 
         public ObservableCollection<BitmapSource> Images { get; } = new ObservableCollection<BitmapSource>();
 
-        public int ImagePosition
+        public int ImageIndex
         {
-            get => _imagePosition;
+            get => _imageIndex;
             set
             {
-                if (SetProperty(ref _imagePosition, value))
+                if (SetProperty(ref _imageIndex, value))
                 {
                     OnPropertyChanged(nameof(ImageSource));
                     OnPropertyChanged(nameof(WindowWidth));
                     OnPropertyChanged(nameof(WindowHeight));
                 }
             }
+        }
+
+        public double ZoomLevel
+        {
+            get => _zoomLevel;
+            set
+            {
+                if (SetProperty(ref _zoomLevel, Math.Round(value)))
+                {
+                    ImagePositionX = 0;
+                    ImagePositionY = 0;
+                }
+            }
+        }
+
+        public double ImagePositionX
+        {
+            get => _imagePositionX;
+            set => SetProperty(ref _imagePositionX, value);
+        }
+
+        public double ImagePositionY
+        {
+            get => _imagePositionY;
+            set => SetProperty(ref _imagePositionY, value);
         }
 
         public ICommand ExitCommand { get; }
@@ -74,6 +106,9 @@ namespace PixelMatcher.ViewModels
         public ICommand PreviewDropCommand { get; }
         public ICommand MouseWheelCommand { get; }
         public ICommand MouseDownCommand { get; }
+        public ICommand ImageMouseDownCommand { get; }
+        public ICommand ImageMouseMoveCommand { get; }
+        public ICommand ImageMouseUpCommand { get; }
 
         public MainViewModel()
         {
@@ -87,6 +122,9 @@ namespace PixelMatcher.ViewModels
             MouseWheelCommand = new DelegateCommand(MouseWheelCommandHandler);
             ToggleTopmostCommand = new DelegateCommand(ToggleTopmostCommandHandler);
             MouseDownCommand = new DelegateCommand(MouseDownCommandHandler);
+            ImageMouseDownCommand = new DelegateCommand(ImageMouseDownCommandHandler);
+            ImageMouseMoveCommand = new DelegateCommand(ImageMouseMoveCommandHandler);
+            ImageMouseUpCommand = new DelegateCommand(ImageMouseUpCommandHandler);
         }
 
         private void ExitCommandHandler(object obj)
@@ -102,6 +140,43 @@ namespace PixelMatcher.ViewModels
             if (obj is Window mainWindow)
             {
                 mainWindow.DragMove();
+            }
+        }
+
+        private void ImageMouseDownCommandHandler(object obj)
+        {
+            if (obj is MouseButtonEventArgs e &&
+                e.OriginalSource is FrameworkElement element)
+            {
+                e.Handled = true;
+                _isDragging = true;
+                _clickPosition = e.GetPosition(WindowHelper.GetParentWindow(element));
+                _clickPosition.X -= ImagePositionX;
+                _clickPosition.Y -= ImagePositionY;
+                element.CaptureMouse();
+            }
+        }
+
+        private void ImageMouseMoveCommandHandler(object obj)
+        {
+            if (_isDragging &&
+                obj is MouseEventArgs e &&
+                e.OriginalSource is FrameworkElement element)
+            {
+                var currentPosition = e.GetPosition(WindowHelper.GetParentWindow(element));
+
+                ImagePositionX = currentPosition.X - _clickPosition.X;
+                ImagePositionY = currentPosition.Y - _clickPosition.Y;
+            }
+        }
+
+        private void ImageMouseUpCommandHandler(object obj)
+        {
+            if (obj is MouseButtonEventArgs e &&
+                e.OriginalSource is FrameworkElement element)
+            {
+                _isDragging = false;
+                element.ReleaseMouseCapture();
             }
         }
 
@@ -126,9 +201,19 @@ namespace PixelMatcher.ViewModels
         {
             if (obj is MouseWheelEventArgs e)
             {
-                var delta = 0.05 * Math.Sign(e.Delta);
-                var newOpacity = ImageOpacity + delta;
-                ImageOpacity = Math.Max(MinimumOpacity, Math.Min(MaximumOpacity, newOpacity));
+                if (Keyboard.IsKeyDown(Key.LeftCtrl) ||
+                    Keyboard.IsKeyDown(Key.RightCtrl))
+                {
+                    var delta = 1 * Math.Sign(e.Delta);
+                    var newZoomLevel = ZoomLevel + delta;
+                    ZoomLevel = Math.Max(MinimumZoomLevel, Math.Min(MaximumZoomLevel, newZoomLevel));
+                }
+                else
+                {
+                    var delta = 0.05 * Math.Sign(e.Delta);
+                    var newOpacity = ImageOpacity + delta;
+                    ImageOpacity = Math.Max(MinimumOpacity, Math.Min(MaximumOpacity, newOpacity));
+                }
             }
         }
 
@@ -157,22 +242,22 @@ namespace PixelMatcher.ViewModels
 
         private void NextImageCommandHandler(object obj)
         {
-            ImagePosition += 1;
+            ImageIndex += 1;
         }
 
         private bool CanExecuteNextImageCommand(object _)
         {
-            return ImagePosition > 0 && ImagePosition < Images.Count;
+            return ImageIndex > 0 && ImageIndex < Images.Count;
         }
 
         private void PreviousImageCommandHandler(object _)
         {
-            ImagePosition -= 1;
+            ImageIndex -= 1;
         }
 
         private bool CanExecutePreviousImageCommand(object _)
         {
-            return ImagePosition > 1;
+            return ImageIndex > 1;
         }
 
         private void DeleteCurrentImageCommandHandler(object obj)
@@ -182,7 +267,7 @@ namespace PixelMatcher.ViewModels
 
         private bool CanExecuteDeleteCurrentImageCommand(object obj)
         {
-            return ImagePosition > 0;
+            return ImageIndex > 0;
         }
 
         private bool CanExecutePasteCommand(object obj)
@@ -192,27 +277,37 @@ namespace PixelMatcher.ViewModels
 
         private void PasteCommandHandler(object obj)
         {
-            var bitmap = Clipboard.GetData(DataFormats.Bitmap);
-            if (bitmap is InteropBitmap image)
+            try
             {
-                // Don't know why original InteropBitmap is not shown as Image.Source.
-                var newImage = ImageHelper.Convert(ImageHelper.GetBitmap(image));
-                AddImage(newImage);
+                var bitmap = Clipboard.GetData(DataFormats.Bitmap);
+                if (bitmap is InteropBitmap image)
+                {
+                    // Windows Paint (and, maybe, some other apps) puts image to the clipboard as
+                    // so-called device dependent bitmap, without the BITMAPFILEHEADER structure in it,
+                    // so WPF cannot use it as is.
+                    // To overcome this, reconvert the image through MemoryStream
+                    var newImage = ImageHelper.Convert(ImageHelper.GetBitmap(image));
+                    AddImage(newImage);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error occured", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void AddImage(BitmapSource image)
         {
             Images.Add(image);
-            ImagePosition = Images.Count;
+            ImageIndex = Images.Count;
         }
 
         private void RemoveCurrentImage()
         {
-            if (ImagePosition == 0) return;
+            if (Images.Count == 0) return;
 
-            Images.RemoveAt(ImagePosition - 1);
-            ImagePosition = Math.Min(ImagePosition + 1, Images.Count);
+            Images.RemoveAt(ImageIndex - 1);
+            ImageIndex = Math.Min(ImageIndex, Images.Count);
         }
     }
 }
