@@ -137,8 +137,12 @@ namespace PixelMatcher.ViewModels
 
         private void MouseDownCommandHandler(object obj)
         {
-            if (obj is Window mainWindow)
+            if (obj is MouseButtonEventArgs e &&
+                e.ChangedButton == MouseButton.Left &&
+                e.OriginalSource is FrameworkElement element)
             {
+                e.Handled = true;
+                var mainWindow = WindowHelper.GetParentWindow(element);
                 mainWindow.DragMove();
             }
         }
