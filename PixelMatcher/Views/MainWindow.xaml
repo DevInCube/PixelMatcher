@@ -64,7 +64,7 @@
                     <Image.RenderTransform>
                         <TransformGroup>
                             <ScaleTransform ScaleX="{Binding ZoomLevel}" ScaleY="{Binding ZoomLevel}" />
-                            <!-- Transforms order is important for correct Zoom&Pan functionality -->
+                            <!--  Transforms order is important for correct Zoom&Pan functionality  -->
                             <TranslateTransform X="{Binding ImagePositionX}" Y="{Binding ImagePositionY}" />
                         </TransformGroup>
                     </Image.RenderTransform>
@@ -94,8 +94,10 @@
                     <TextBlock Style="{StaticResource NoImagesText}">
                         <Run Text="Drop or paste image." />
                     </TextBlock>
-                    <TextBlock Margin="10,0,5,0" Text="Opacity:" />
-                    <TextBlock Text="{Binding ImageOpacity, StringFormat={}{0:0.##}}" />
+                    <TextBlock Width="70" Margin="10,0,5,0">
+                        <Run Text="Opacity: " />
+                        <Run Text="{Binding ImageOpacity, StringFormat={}{0:0.##}}" />
+                    </TextBlock>
                     <Slider Width="80"
                             Margin="0,0,5,0"
                             LargeChange="0.33"
@@ -103,8 +105,10 @@
                             Minimum="{x:Static viewModels:MainViewModel.MinimumOpacity}"
                             SmallChange="0.1"
                             Value="{Binding ImageOpacity}" />
-                    <TextBlock Margin="10,0,5,0" Text="Zoom:" />
-                    <TextBlock Margin="0,0,5,0" Text="{Binding ZoomLevel, StringFormat=x{0:0.0}}" />
+                    <TextBlock Width="80" Margin="10,0,5,0">
+                        <Run Text="Zoom: " />
+                        <Run Text="{Binding ZoomLevel, StringFormat=x{0:0.0}}" />
+                    </TextBlock>
                     <Slider Width="80"
                             Margin="0,0,5,0"
                             LargeChange="3"

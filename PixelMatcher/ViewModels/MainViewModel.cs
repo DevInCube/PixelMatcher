@@ -52,7 +52,7 @@ namespace PixelMatcher.ViewModels
         public double WindowHeight
         {
             get => ImageSource == null ? MinWindowHeight : ImageSource.Height + 34;
-            set { } // Ignoire resize by user
+            set { } // Ignore resize by user
         }
 
         public ObservableCollection<BitmapSource> Images { get; } = new ObservableCollection<BitmapSource>();
