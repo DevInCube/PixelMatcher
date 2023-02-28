@@ -10,7 +10,9 @@
         WindowStartupLocation="CenterOwner"
         mc:Ignorable="d"
         x:Name="HelpWindow1"
-        Title="Help" Height="191" Width="303">
+        Title="Help"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight">
     <Window.DataContext>
         <viewModels:HelpViewModel/>
     </Window.DataContext>
@@ -18,8 +20,6 @@
         <KeyBinding Key="Esc" Command="{Binding ExitCommand}" CommandParameter="{Binding ElementName=HelpWindow1}"/>
     </Window.InputBindings>
     <Grid>
-        <Border BorderBrush="SteelBlue" >
-            <TextBlock Text="{Binding HelpText}" FontWeight="Normal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,10"></TextBlock>
-        </Border>
+        <TextBlock Text="{Binding HelpText}" FontWeight="Normal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,10"></TextBlock>
     </Grid>
 </Window>
