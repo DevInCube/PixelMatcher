@@ -109,6 +109,10 @@ namespace PixelMatcher.ViewModels
         public ICommand ImageMouseDownCommand { get; }
         public ICommand ImageMouseMoveCommand { get; }
         public ICommand ImageMouseUpCommand { get; }
+        public ICommand MoveImageUpCommand { get; }
+        public ICommand MoveImageDownCommand { get; }
+        public ICommand MoveImageLeftCommand { get; }
+        public ICommand MoveImageRightCommand { get; }
 
         public MainViewModel()
         {
@@ -125,6 +129,30 @@ namespace PixelMatcher.ViewModels
             ImageMouseDownCommand = new DelegateCommand(ImageMouseDownCommandHandler);
             ImageMouseMoveCommand = new DelegateCommand(ImageMouseMoveCommandHandler);
             ImageMouseUpCommand = new DelegateCommand(ImageMouseUpCommandHandler);
+            MoveImageUpCommand = new DelegateCommand(MoveImageUpCommandHandler);
+            MoveImageDownCommand = new DelegateCommand(MoveImageDownCommandHandler);
+            MoveImageLeftCommand = new DelegateCommand(MoveImageLeftCommandHandler);
+            MoveImageRightCommand = new DelegateCommand(MoveImageRightCommandHandler);
+        }
+
+        private void MoveImageRightCommandHandler(object obj)
+        {
+            ImagePositionX += 1;
+        }
+
+        private void MoveImageLeftCommandHandler(object obj)
+        {
+            ImagePositionX -= 1;
+        }
+
+        private void MoveImageDownCommandHandler(object obj)
+        {
+            ImagePositionY += 1;
+        }
+
+        private void MoveImageUpCommandHandler(object obj)
+        {
+            ImagePositionY -= 1;
         }
 
         private void ExitCommandHandler(object obj)

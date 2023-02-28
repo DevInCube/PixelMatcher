@@ -45,8 +45,12 @@
         <KeyBinding Key="F1" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="H" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="Delete" Command="{Binding DeleteCurrentImageCommand}" />
-        <KeyBinding Key="Up" Command="{Binding PreviousImageCommand}" />
-        <KeyBinding Key="Down" Command="{Binding NextImageCommand}" />
+        <KeyBinding Key="PageUp" Command="{Binding PreviousImageCommand}" />
+        <KeyBinding Key="PageDown" Command="{Binding NextImageCommand}" />
+        <KeyBinding Key="Up" Command="{Binding MoveImageUpCommand}" />
+        <KeyBinding Key="Down" Command="{Binding MoveImageDownCommand}" />
+        <KeyBinding Key="Left" Command="{Binding MoveImageLeftCommand}" />
+        <KeyBinding Key="Right" Command="{Binding MoveImageRightCommand}" />
     </Window.InputBindings>
     <Window.Resources>
         <ResourceDictionary Source="WindowResourceDictionary.xaml" />
