@@ -2,6 +2,7 @@
 using PixelMatcher.Helpers;
 using System;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -11,21 +12,25 @@ namespace PixelMatcher.ViewModels
 {
     internal class MainViewModel : ObservableObject
     {
-        public const double MinWindowWidth = 640;
-        public const double MinWindowHeight = 480;
+        public const double MinWindowWidth = 800;
+        public const double MinWindowHeight = 600;
 
         public const double MinimumOpacity = 0.1;
         public const double MaximumOpacity = 0.9;
+
+        public const double MinimumContrast = -200;
+        public const double MaximumContrast = 200;
 
         public const double MinimumZoomLevel = 1.0;
         public const double MaximumZoomLevel = 12.0;
 
         private bool _topmost = true;
         private double _imageOpacity = 0.5;
+        private int _imageContrast = 0;
         private int _imageIndex = 0;
         private double _zoomLevel = MinimumZoomLevel;
         private bool _isDragging;
-        private Point _clickPosition;
+        private System.Windows.Point _clickPosition;
         private double _imagePositionX;
         private double _imagePositionY;
 
@@ -41,7 +46,30 @@ namespace PixelMatcher.ViewModels
             set => SetProperty(ref _imageOpacity, value);
         }
 
-        public BitmapSource ImageSource => ImageIndex != 0 ? Images[ImageIndex - 1] : null;
+        public int ImageContrast
+        {
+            get => _imageContrast;
+            set
+            {
+                if (SetProperty(ref _imageContrast, value))
+                {
+                    OnPropertyChanged(nameof(ImageSource));
+                }
+            }
+        }
+
+        public BitmapSource ImageSource
+        {
+            get
+            {
+                if (ImageIndex == 0) return null;
+
+                var image = Images[ImageIndex - 1];
+                var cloneImage = (Image)image.Clone();
+                ImageHelper.AdjustContrast(cloneImage, ImageContrast);
+                return ImageHelper.Convert(cloneImage);
+            }
+        }
 
         public double WindowWidth
         {
@@ -55,7 +83,7 @@ namespace PixelMatcher.ViewModels
             set { } // Ignore resize by user
         }
 
-        public ObservableCollection<BitmapSource> Images { get; } = new ObservableCollection<BitmapSource>();
+        public ObservableCollection<Image> Images { get; } = new ObservableCollection<Image>();
 
         public int ImageIndex
         {
@@ -181,6 +209,7 @@ namespace PixelMatcher.ViewModels
                 e.OriginalSource is FrameworkElement element)
             {
                 e.Handled = true;
+                element.Focus();
                 _isDragging = true;
                 _clickPosition = e.GetPosition(WindowHelper.GetParentWindow(element));
                 _clickPosition.X -= ImagePositionX;
@@ -256,7 +285,7 @@ namespace PixelMatcher.ViewModels
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                 try
                 {
-                    var image = new BitmapImage(new Uri(files[0], UriKind.Absolute));
+                    var image = Bitmap.FromFile(files[0]);
                     AddImage(image);
                 }
                 catch (NotSupportedException)
@@ -318,8 +347,7 @@ namespace PixelMatcher.ViewModels
                     // so-called device dependent bitmap, without the BITMAPFILEHEADER structure in it,
                     // so WPF cannot use it as is.
                     // To overcome this, reconvert the image through MemoryStream
-                    var newImage = ImageHelper.Convert(ImageHelper.GetBitmap(image));
-                    AddImage(newImage);
+                    AddImage(ImageHelper.GetBitmap(image));
                 }
             }
             catch (Exception ex)
@@ -328,7 +356,7 @@ namespace PixelMatcher.ViewModels
             }
         }
 
-        private void AddImage(BitmapSource image)
+        private void AddImage(Image image)
         {
             Images.Add(image);
             ImageIndex = Images.Count;
