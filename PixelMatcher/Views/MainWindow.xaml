@@ -64,6 +64,7 @@
                        RenderOptions.BitmapScalingMode="NearestNeighbor"
                        RenderTransformOrigin="0,0"
                        Source="{Binding ImageSource}"
+                       Focusable="True"
                        Stretch="None">
                     <Image.RenderTransform>
                         <TransformGroup>
@@ -120,6 +121,17 @@
                             Minimum="{x:Static viewModels:MainViewModel.MinimumZoomLevel}"
                             SmallChange="1"
                             Value="{Binding ZoomLevel}" />
+                    <TextBlock Width="80" Margin="10,0,5,0">
+                        <Run Text="Contrast: " />
+                        <Run Text="{Binding ImageContrast}" />
+                    </TextBlock>
+                    <Slider Width="80"
+                            Margin="0,0,5,0"
+                            LargeChange="3"
+                            Maximum="{x:Static viewModels:MainViewModel.MaximumContrast}"
+                            Minimum="{x:Static viewModels:MainViewModel.MinimumContrast}"
+                            SmallChange="1"
+                            Value="{Binding ImageContrast}" />
                 </StackPanel>
                 <Button HorizontalAlignment="Right"
                         Command="{Binding ExitCommand}"
