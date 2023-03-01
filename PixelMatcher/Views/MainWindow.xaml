@@ -42,6 +42,8 @@
     <Window.InputBindings>
         <KeyBinding Key="Esc" Command="{Binding ExitCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="T" Command="{Binding ToggleTopmostCommand}" />
+        <KeyBinding Key="M" Command="{Binding MinimizeCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
+        <KeyBinding Key="F" Command="{Binding MaximizeCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="F1" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="H" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="Delete" Command="{Binding DeleteCurrentImageCommand}" />
@@ -60,11 +62,26 @@
             <Canvas ClipToBounds="True">
                 <Image HorizontalAlignment="Center"
                        VerticalAlignment="Center"
+                       Focusable="True"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       RenderTransformOrigin="0,0"
+                       Source="{Binding BackgroundImageSource}"
+                       Stretch="None">
+                    <Image.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="{Binding ZoomLevel}" ScaleY="{Binding ZoomLevel}" />
+                            <!--  Transforms order is important for correct Zoom&Pan functionality  -->
+                            <TranslateTransform X="{Binding BackgroundImagePositionX}" Y="{Binding BackgroundImagePositionY}" />
+                        </TransformGroup>
+                    </Image.RenderTransform>
+                </Image>
+                <Image HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Focusable="True"
                        Opacity="{Binding ImageOpacity}"
                        RenderOptions.BitmapScalingMode="NearestNeighbor"
                        RenderTransformOrigin="0,0"
                        Source="{Binding ImageSource}"
-                       Focusable="True"
                        Stretch="None">
                     <Image.RenderTransform>
                         <TransformGroup>
@@ -99,12 +116,12 @@
                     <TextBlock Style="{StaticResource NoImagesText}">
                         <Run Text="Drop or paste image." />
                     </TextBlock>
-                    <TextBlock Width="70" Margin="10,0,5,0">
+                    <TextBlock Width="80" Margin="10,0,5,0">
                         <Run Text="Opacity: " />
                         <Run Text="{Binding ImageOpacity, StringFormat={}{0:0.##}}" />
                     </TextBlock>
                     <Slider Width="80"
-                            Margin="0,0,5,0"
+                            Margin="-10,0,5,0"
                             LargeChange="0.33"
                             Maximum="{x:Static viewModels:MainViewModel.MaximumOpacity}"
                             Minimum="{x:Static viewModels:MainViewModel.MinimumOpacity}"
@@ -115,7 +132,7 @@
                         <Run Text="{Binding ZoomLevel, StringFormat=x{0:0.0}}" />
                     </TextBlock>
                     <Slider Width="80"
-                            Margin="0,0,5,0"
+                            Margin="-20,0,5,0"
                             LargeChange="3"
                             Maximum="{x:Static viewModels:MainViewModel.MaximumZoomLevel}"
                             Minimum="{x:Static viewModels:MainViewModel.MinimumZoomLevel}"
@@ -126,22 +143,36 @@
                         <Run Text="{Binding ImageContrast}" />
                     </TextBlock>
                     <Slider Width="80"
-                            Margin="0,0,5,0"
+                            Margin="-5,0,5,0"
                             LargeChange="3"
                             Maximum="{x:Static viewModels:MainViewModel.MaximumContrast}"
                             Minimum="{x:Static viewModels:MainViewModel.MinimumContrast}"
                             SmallChange="1"
-                            Value="{Binding ImageContrast}" />
+                            Value="{Binding ImageContrast}">
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="MouseDoubleClick">
+                                <i:InvokeCommandAction Command="{Binding ResetImageContrastCommand}" />
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                    </Slider>
                 </StackPanel>
-                <Button HorizontalAlignment="Right"
+                <Button Width="24"
+                        HorizontalAlignment="Right"
                         Command="{Binding ExitCommand}"
                         CommandParameter="{Binding ElementName=MainWindow1}"
                         Content="✕"
                         DockPanel.Dock="Right" />
-                <Button HorizontalAlignment="Right"
+                <Button Width="24"
+                        HorizontalAlignment="Right"
+                        Command="{Binding MinimizeCommand}"
+                        CommandParameter="{Binding ElementName=MainWindow1}"
+                        Content="_"
+                        DockPanel.Dock="Right" />
+                <Button Width="24"
+                        HorizontalAlignment="Right"
                         Command="{Binding HelpCommand}"
                         CommandParameter="{Binding ElementName=MainWindow1}"
-                        Content="Help"
+                        Content="?"
                         DockPanel.Dock="Right" />
                 <StackPanel Margin="0,0,5,0"
                             HorizontalAlignment="Right"
