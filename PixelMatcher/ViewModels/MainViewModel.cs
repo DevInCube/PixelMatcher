@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace PixelMatcher.ViewModels
 {
@@ -24,6 +25,8 @@ namespace PixelMatcher.ViewModels
         public const double MinimumZoomLevel = 1.0;
         public const double MaximumZoomLevel = 12.0;
 
+        private BitmapSource _backgroundImageSource;
+
         private bool _topmost = true;
         private double _imageOpacity = 0.5;
         private int _imageContrast = 0;
@@ -33,6 +36,8 @@ namespace PixelMatcher.ViewModels
         private System.Windows.Point _clickPosition;
         private double _imagePositionX;
         private double _imagePositionY;
+        private double _backgroundImagePositionX;
+        private double _backgroundImagePositionY;
 
         public bool Topmost
         {
@@ -71,15 +76,21 @@ namespace PixelMatcher.ViewModels
             }
         }
 
+        public BitmapSource BackgroundImageSource
+        {
+            get => _backgroundImageSource;
+            set => SetProperty(ref _backgroundImageSource, value);
+        }
+
         public double WindowWidth
         {
-            get => ImageSource == null ? MinWindowWidth : ImageSource.Width + 4;
+            get => ImageSource == null ? MinWindowWidth : ImageSource.Width / ZoomLevel + 4;
             set { } // Ignore resize by user
         }
 
         public double WindowHeight
         {
-            get => ImageSource == null ? MinWindowHeight : ImageSource.Height + 34;
+            get => ImageSource == null ? MinWindowHeight : ImageSource.Height / ZoomLevel + 34;
             set { } // Ignore resize by user
         }
 
@@ -104,10 +115,19 @@ namespace PixelMatcher.ViewModels
             get => _zoomLevel;
             set
             {
+                var oldZoomLevel = _zoomLevel;
                 if (SetProperty(ref _zoomLevel, Math.Round(value)))
                 {
                     ImagePositionX = 0;
                     ImagePositionY = 0;
+                    if (oldZoomLevel == 1 && _zoomLevel > 1)
+                    {
+                        GetScreenshot();
+                    }
+                    else if (_zoomLevel == 1)
+                    {
+                        BackgroundImageSource = null;
+                    }
                 }
             }
         }
@@ -124,9 +144,23 @@ namespace PixelMatcher.ViewModels
             set => SetProperty(ref _imagePositionY, value);
         }
 
+        public double BackgroundImagePositionX
+        {
+            get => _backgroundImagePositionX;
+            set => SetProperty(ref _backgroundImagePositionX, value);
+        }
+
+        public double BackgroundImagePositionY
+        {
+            get => _backgroundImagePositionY;
+            set => SetProperty(ref _backgroundImagePositionY, value);
+        }
+
         public ICommand ExitCommand { get; }
         public ICommand HelpCommand { get; }
         public ICommand ToggleTopmostCommand { get; }
+        public ICommand MinimizeCommand { get; }
+        public ICommand MaximizeCommand { get; }
         public ICommand DeleteCurrentImageCommand { get; }
         public ICommand PreviousImageCommand { get; }
         public ICommand NextImageCommand { get; }
@@ -141,11 +175,12 @@ namespace PixelMatcher.ViewModels
         public ICommand MoveImageDownCommand { get; }
         public ICommand MoveImageLeftCommand { get; }
         public ICommand MoveImageRightCommand { get; }
+        public ICommand ResetImageContrastCommand { get; }
 
         public MainViewModel()
         {
             ExitCommand = new DelegateCommand(ExitCommandHandler);
-            HelpCommand = new DelegateCommand(HelpCommandHandle);
+            HelpCommand = new DelegateCommand(HelpCommandHandler);
             PasteCommand = new DelegateCommand(PasteCommandHandler, CanExecutePasteCommand);
             DeleteCurrentImageCommand = new DelegateCommand(DeleteCurrentImageCommandHandler, CanExecuteDeleteCurrentImageCommand);
             PreviousImageCommand = new DelegateCommand(PreviousImageCommandHandler, CanExecutePreviousImageCommand);
@@ -153,6 +188,8 @@ namespace PixelMatcher.ViewModels
             PreviewDropCommand = new DelegateCommand(PreviewDropCommandHandler, CanExecutePreviewDropCommand);
             MouseWheelCommand = new DelegateCommand(MouseWheelCommandHandler);
             ToggleTopmostCommand = new DelegateCommand(ToggleTopmostCommandHandler);
+            MinimizeCommand = new DelegateCommand(MinimizeCommandHandler);
+            MaximizeCommand = new DelegateCommand(MaximizeCommandHandler);
             MouseDownCommand = new DelegateCommand(MouseDownCommandHandler);
             ImageMouseDownCommand = new DelegateCommand(ImageMouseDownCommandHandler);
             ImageMouseMoveCommand = new DelegateCommand(ImageMouseMoveCommandHandler);
@@ -161,6 +198,7 @@ namespace PixelMatcher.ViewModels
             MoveImageDownCommand = new DelegateCommand(MoveImageDownCommandHandler);
             MoveImageLeftCommand = new DelegateCommand(MoveImageLeftCommandHandler);
             MoveImageRightCommand = new DelegateCommand(MoveImageRightCommandHandler);
+            ResetImageContrastCommand = new DelegateCommand(ResetImageContrastCommandHandler);
         }
 
         private void MoveImageRightCommandHandler(object obj)
@@ -199,7 +237,30 @@ namespace PixelMatcher.ViewModels
             {
                 e.Handled = true;
                 var mainWindow = WindowHelper.GetParentWindow(element);
-                mainWindow.DragMove();
+
+                if (e.ClickCount > 1)
+                {
+                    MaximizeCommand.Execute(mainWindow);
+                }
+                else
+                {
+                    mainWindow.DragMove();
+                }
+            }
+        }
+
+        private void MaximizeCommandHandler(object obj)
+        {
+            if (obj is Window mainWindow)
+            {
+                if (mainWindow.WindowState == WindowState.Normal)
+                {
+                    mainWindow.WindowState = WindowState.Maximized;
+                }
+                else if (mainWindow.WindowState == WindowState.Maximized)
+                {
+                    mainWindow.WindowState = WindowState.Normal;
+                }
             }
         }
 
@@ -212,8 +273,17 @@ namespace PixelMatcher.ViewModels
                 element.Focus();
                 _isDragging = true;
                 _clickPosition = e.GetPosition(WindowHelper.GetParentWindow(element));
-                _clickPosition.X -= ImagePositionX;
-                _clickPosition.Y -= ImagePositionY;
+                if (BackgroundImageSource != null &&
+                    IsCtrlPressed())
+                {
+                    _clickPosition.X -= BackgroundImagePositionX;
+                    _clickPosition.Y -= BackgroundImagePositionY;
+                }
+                else
+                {
+                    _clickPosition.X -= ImagePositionX;
+                    _clickPosition.Y -= ImagePositionY;
+                }
                 element.CaptureMouse();
             }
         }
@@ -226,8 +296,17 @@ namespace PixelMatcher.ViewModels
             {
                 var currentPosition = e.GetPosition(WindowHelper.GetParentWindow(element));
 
-                ImagePositionX = currentPosition.X - _clickPosition.X;
-                ImagePositionY = currentPosition.Y - _clickPosition.Y;
+                if (BackgroundImageSource != null &&
+                    IsCtrlPressed())
+                {
+                    BackgroundImagePositionX = currentPosition.X - _clickPosition.X;
+                    BackgroundImagePositionY = currentPosition.Y - _clickPosition.Y;
+                }
+                else
+                {
+                    ImagePositionX = currentPosition.X - _clickPosition.X;
+                    ImagePositionY = currentPosition.Y - _clickPosition.Y;
+                }
             }
         }
 
@@ -246,7 +325,15 @@ namespace PixelMatcher.ViewModels
             Topmost = !Topmost;
         }
 
-        private void HelpCommandHandle(object obj)
+        private void MinimizeCommandHandler(object obj)
+        {
+            if (obj is Window mainWindow)
+            {
+                mainWindow.WindowState = WindowState.Minimized;
+            }
+        }
+
+        private void HelpCommandHandler(object obj)
         {
             if (obj is Window mainWindow)
             {
@@ -262,8 +349,7 @@ namespace PixelMatcher.ViewModels
         {
             if (obj is MouseWheelEventArgs e)
             {
-                if (Keyboard.IsKeyDown(Key.LeftCtrl) ||
-                    Keyboard.IsKeyDown(Key.RightCtrl))
+                if (IsCtrlPressed())
                 {
                     var delta = 1 * Math.Sign(e.Delta);
                     var newZoomLevel = ZoomLevel + delta;
@@ -356,6 +442,11 @@ namespace PixelMatcher.ViewModels
             }
         }
 
+        private void ResetImageContrastCommandHandler(object obj)
+        {
+            ImageContrast = 0;
+        }
+
         private void AddImage(Image image)
         {
             Images.Add(image);
@@ -368,6 +459,37 @@ namespace PixelMatcher.ViewModels
 
             Images.RemoveAt(ImageIndex - 1);
             ImageIndex = Math.Min(ImageIndex, Images.Count);
+        }
+
+        private void GetScreenshot()
+        {
+            var window = Application.Current.MainWindow;
+            if (window == null) return;
+
+            BackgroundImageSource = null;
+            window.Opacity = 0;
+            var previousWindowState = window.WindowState;
+            window.WindowState = WindowState.Normal; // To be excluded from the screenshot, window should not be maximized
+
+            // Wait for Opacity to apply to take screenshot without self
+            window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
+
+            var screenBeginPoint = window.PointToScreen(new System.Windows.Point(2, 32)); // omit window header
+
+            BackgroundImageSource = ScreenHelper.GetScreenshot();
+
+            // Return window to visible state
+            window.WindowState = previousWindowState;
+            window.Opacity = 1;
+            BackgroundImagePositionX = -screenBeginPoint.X;
+            BackgroundImagePositionY = -screenBeginPoint.Y;
+        }
+
+        private static bool IsCtrlPressed()
+        {
+            return
+                Keyboard.IsKeyDown(Key.LeftCtrl) ||
+                Keyboard.IsKeyDown(Key.RightCtrl);
         }
     }
 }

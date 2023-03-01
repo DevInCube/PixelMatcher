@@ -29,6 +29,7 @@ namespace PixelMatcher.Helpers
 
         public static BitmapImage Convert(Image src)
         {
+            if (src == null) return null;
             using (MemoryStream ms = new MemoryStream())
             {
                 src.Save(ms, ImageFormat.Bmp);

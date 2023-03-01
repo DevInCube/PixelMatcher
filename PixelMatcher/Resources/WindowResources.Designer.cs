@@ -68,6 +68,10 @@ namespace PixelMatcher.Resources {
         ///Press Page Up/Page Down to navigate through image history.
         ///Press Delete to remove current image.
         ///Press T to toggle window topmost mode.
+        ///Press M to minimize window.
+        ///Press F to maximize window.
+        ///Double-click window header to toggle Maximized mode.
+        ///Double-click Contrast slider to reset image contrast.
         ///Press Esc to close..
         /// </summary>
         public static string HelpText {
