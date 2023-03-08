@@ -5,6 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:tb="clr-namespace:H.NotifyIcon;assembly=H.NotifyIcon.Wpf"
         xmlns:viewModels="clr-namespace:PixelMatcher.ViewModels"
         Name="MainWindow1"
         Title="PixelMatcher"
@@ -16,6 +17,7 @@
         AllowDrop="True"
         AllowsTransparency="True"
         Background="Transparent"
+        Icon="pack://application:,,,/PixelMatcher;component/Images/MainIcon.ico"
         Topmost="{Binding Topmost}"
         WindowStyle="None"
         mc:Ignorable="d">
@@ -40,7 +42,7 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Window.InputBindings>
-        <KeyBinding Key="Esc" Command="{Binding ExitCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
+        <KeyBinding Key="Esc" Command="{Binding MinimizeToTrayCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="T" Command="{Binding ToggleTopmostCommand}" />
         <KeyBinding Key="M" Command="{Binding MinimizeCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="F" Command="{Binding MaximizeCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
@@ -55,9 +57,29 @@
         <KeyBinding Key="Right" Command="{Binding MoveImageRightCommand}" />
     </Window.InputBindings>
     <Window.Resources>
-        <ResourceDictionary Source="WindowResourceDictionary.xaml" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="WindowResourceDictionary.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Image x:Key="MainIcon" Source="pack://application:,,,/PixelMatcher;component/Images/MainIcon.ico"/>
+            <ContextMenu x:Key="TaskbarContextMenu">
+                <MenuItem Icon="{StaticResource MainIcon}" Command="{Binding MinimizeToTrayCommand}" CommandParameter="{x:Reference MainWindow1}" Header="PixelMatcher" />
+                <Separator/>
+                <MenuItem Command="{Binding HelpCommand}" CommandParameter="{x:Reference MainWindow1}" Header="Help" />
+                <Separator/>
+                <MenuItem Command="{Binding ExitCommand}" CommandParameter="{x:Reference MainWindow1}" Header="Close" />
+            </ContextMenu>
+        </ResourceDictionary>
     </Window.Resources>
     <Grid>
+        <tb:TaskbarIcon ContextMenu="{StaticResource TaskbarContextMenu}"
+                        IconSource="/Images/MainIcon.ico"
+                        LeftClickCommand="{Binding MinimizeToTrayCommand}"
+                        LeftClickCommandParameter="{Binding ElementName=MainWindow1}"
+                        DoubleClickCommand="{Binding MinimizeToTrayCommand}"
+                        DoubleClickCommandParameter="{Binding ElementName=MainWindow1}"
+                        PopupActivation="RightClick"
+                        ToolTipText="PixelMatcher" />
         <Border BorderBrush="LightSteelBlue" BorderThickness="2,32,2,2">
             <Canvas ClipToBounds="True">
                 <Image HorizontalAlignment="Center"
@@ -158,7 +180,7 @@
                 </StackPanel>
                 <Button Width="24"
                         HorizontalAlignment="Right"
-                        Command="{Binding ExitCommand}"
+                        Command="{Binding MinimizeToTrayCommand}"
                         CommandParameter="{Binding ElementName=MainWindow1}"
                         Content="✕"
                         DockPanel.Dock="Right" />
