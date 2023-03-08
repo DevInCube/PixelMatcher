@@ -70,6 +70,7 @@ namespace PixelMatcher.Resources {
         ///Press T to toggle window topmost mode.
         ///Press M to minimize window.
         ///Press F to maximize window.
+        ///Press F5 to refresh background image (only in Zoom Mode).
         ///Double-click window header to toggle Maximized mode.
         ///Double-click Contrast slider to reset image contrast.
         ///Press Esc to close..

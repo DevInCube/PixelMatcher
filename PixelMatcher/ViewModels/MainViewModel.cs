@@ -176,6 +176,7 @@ namespace PixelMatcher.ViewModels
         public ICommand MoveImageLeftCommand { get; }
         public ICommand MoveImageRightCommand { get; }
         public ICommand ResetImageContrastCommand { get; }
+        public ICommand RefreshBackgroundImageCommand { get; }
 
         public MainViewModel()
         {
@@ -199,6 +200,7 @@ namespace PixelMatcher.ViewModels
             MoveImageLeftCommand = new DelegateCommand(MoveImageLeftCommandHandler);
             MoveImageRightCommand = new DelegateCommand(MoveImageRightCommandHandler);
             ResetImageContrastCommand = new DelegateCommand(ResetImageContrastCommandHandler);
+            RefreshBackgroundImageCommand = new DelegateCommand(RefreshBackgroundImageCommandHandler);
         }
 
         private void MoveImageRightCommandHandler(object obj)
@@ -447,6 +449,15 @@ namespace PixelMatcher.ViewModels
             ImageContrast = 0;
         }
 
+        private void RefreshBackgroundImageCommandHandler(object obj)
+        {
+            if (ZoomLevel == 1)
+            {
+                return;
+            }
+            GetScreenshot(resetBackgroundPosition: false);
+        }
+
         private void AddImage(Image image)
         {
             Images.Add(image);
@@ -461,7 +472,7 @@ namespace PixelMatcher.ViewModels
             ImageIndex = Math.Min(ImageIndex, Images.Count);
         }
 
-        private void GetScreenshot()
+        private void GetScreenshot(bool resetBackgroundPosition = true)
         {
             var window = Application.Current.MainWindow;
             if (window == null) return;
@@ -470,6 +481,7 @@ namespace PixelMatcher.ViewModels
             window.Opacity = 0;
             var previousWindowState = window.WindowState;
             window.WindowState = WindowState.Normal; // To be excluded from the screenshot, window should not be maximized
+            window.Hide();
 
             // Wait for Opacity to apply to take screenshot without self
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
@@ -481,8 +493,14 @@ namespace PixelMatcher.ViewModels
             // Return window to visible state
             window.WindowState = previousWindowState;
             window.Opacity = 1;
-            BackgroundImagePositionX = -screenBeginPoint.X;
-            BackgroundImagePositionY = -screenBeginPoint.Y;
+            window.Show();
+            window.Activate();
+
+            if (resetBackgroundPosition)
+            {
+                BackgroundImagePositionX = -screenBeginPoint.X;
+                BackgroundImagePositionY = -screenBeginPoint.Y;
+            }
         }
 
         private static bool IsCtrlPressed()
