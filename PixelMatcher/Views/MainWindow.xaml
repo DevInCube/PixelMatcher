@@ -45,6 +45,7 @@
         <KeyBinding Key="M" Command="{Binding MinimizeCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="F" Command="{Binding MaximizeCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="F1" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
+        <KeyBinding Key="F5" Command="{Binding RefreshBackgroundImageCommand}" />
         <KeyBinding Key="H" Command="{Binding HelpCommand}" CommandParameter="{Binding ElementName=MainWindow1}" />
         <KeyBinding Key="Delete" Command="{Binding DeleteCurrentImageCommand}" />
         <KeyBinding Key="PageUp" Command="{Binding PreviousImageCommand}" />
@@ -63,6 +64,7 @@
                 <Image HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Focusable="True"
+                       FocusVisualStyle="{x:Null}"
                        RenderOptions.BitmapScalingMode="NearestNeighbor"
                        RenderTransformOrigin="0,0"
                        Source="{Binding BackgroundImageSource}"
@@ -78,6 +80,7 @@
                 <Image HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Focusable="True"
+                       FocusVisualStyle="{x:Null}"
                        Opacity="{Binding ImageOpacity}"
                        RenderOptions.BitmapScalingMode="NearestNeighbor"
                        RenderTransformOrigin="0,0"
@@ -121,7 +124,7 @@
                         <Run Text="{Binding ImageOpacity, StringFormat={}{0:0.##}}" />
                     </TextBlock>
                     <Slider Width="80"
-                            Margin="-10,0,5,0"
+                            Margin="-15,0,5,0"
                             LargeChange="0.33"
                             Maximum="{x:Static viewModels:MainViewModel.MaximumOpacity}"
                             Minimum="{x:Static viewModels:MainViewModel.MinimumOpacity}"
@@ -132,12 +135,15 @@
                         <Run Text="{Binding ZoomLevel, StringFormat=x{0:0.0}}" />
                     </TextBlock>
                     <Slider Width="80"
-                            Margin="-20,0,5,0"
+                            Margin="-20,0,0,0"
                             LargeChange="3"
                             Maximum="{x:Static viewModels:MainViewModel.MaximumZoomLevel}"
                             Minimum="{x:Static viewModels:MainViewModel.MinimumZoomLevel}"
                             SmallChange="1"
                             Value="{Binding ZoomLevel}" />
+                    <Button Padding="0"  Width="18" VerticalContentAlignment="Top" VerticalAlignment="Center" Command="{Binding RefreshBackgroundImageCommand}">
+                        <TextBlock Margin="0,-2,0,0" Text="⟳"/>
+                    </Button>
                     <TextBlock Width="80" Margin="10,0,5,0">
                         <Run Text="Contrast: " />
                         <Run Text="{Binding ImageContrast}" />
