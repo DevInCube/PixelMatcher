@@ -38,6 +38,7 @@ namespace PixelMatcher.ViewModels
         private double _imagePositionY;
         private double _backgroundImagePositionX;
         private double _backgroundImagePositionY;
+        private WindowState _lastWindowState;
 
         public bool Topmost
         {
@@ -159,6 +160,7 @@ namespace PixelMatcher.ViewModels
         public ICommand ExitCommand { get; }
         public ICommand HelpCommand { get; }
         public ICommand ToggleTopmostCommand { get; }
+        public ICommand MinimizeToTrayCommand { get; }
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeCommand { get; }
         public ICommand DeleteCurrentImageCommand { get; }
@@ -189,6 +191,7 @@ namespace PixelMatcher.ViewModels
             PreviewDropCommand = new DelegateCommand(PreviewDropCommandHandler, CanExecutePreviewDropCommand);
             MouseWheelCommand = new DelegateCommand(MouseWheelCommandHandler);
             ToggleTopmostCommand = new DelegateCommand(ToggleTopmostCommandHandler);
+            MinimizeToTrayCommand = new DelegateCommand(MinimizeToTrayCommandHandler);
             MinimizeCommand = new DelegateCommand(MinimizeCommandHandler);
             MaximizeCommand = new DelegateCommand(MaximizeCommandHandler);
             MouseDownCommand = new DelegateCommand(MouseDownCommandHandler);
@@ -327,10 +330,37 @@ namespace PixelMatcher.ViewModels
             Topmost = !Topmost;
         }
 
+        private void MinimizeToTrayCommandHandler(object obj)
+        {
+            if (obj is Window mainWindow)
+            {
+                if (!mainWindow.IsVisible)
+                {
+                    mainWindow.Show();
+                    if (mainWindow.WindowState == WindowState.Minimized)
+                    {
+                        mainWindow.WindowState = _lastWindowState;
+                    }
+                    mainWindow.BringIntoView();
+                    mainWindow.Activate();
+                }
+                else
+                {
+                    if (mainWindow.WindowState != WindowState.Minimized)
+                    {
+                        _lastWindowState = mainWindow.WindowState;
+                    }
+                    mainWindow.WindowState = WindowState.Minimized;
+                    mainWindow.Hide();
+                }
+            }
+        }
+
         private void MinimizeCommandHandler(object obj)
         {
             if (obj is Window mainWindow)
             {
+                _lastWindowState = mainWindow.WindowState;
                 mainWindow.WindowState = WindowState.Minimized;
             }
         }

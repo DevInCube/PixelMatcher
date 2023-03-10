@@ -130,6 +130,6 @@ Press F to maximize window.
 Press F5 to refresh background image (only in Zoom Mode).
 Double-click window header to toggle Maximized mode.
 Double-click Contrast slider to reset image contrast.
-Press Esc to close.</value>
+Press Esc to minimize window to taskbar notification area.</value>
   </data>
 </root>
